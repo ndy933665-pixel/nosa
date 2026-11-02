@@ -49,6 +49,32 @@
   --color-info: #2b6cb0;
   --color-info-50: #e5eef8;
 
+  /* WhatsApp's own green, used only by the floating chat button. */
+  --color-whatsapp: #25d366;
+  --color-whatsapp-dark: #1da851;
+
+  /* A short shake when a field turns red, so the eye finds it. */
+  --animate-field-shake: field-shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+  @keyframes field-shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-4px); }
+    40%, 80% { transform: translateX(4px); }
+  }
+
+  /* The chat label peeks out once after the page loads, then hides until hover. */
+  --animate-whatsapp-peek: whatsapp-peek 6s ease-in-out 1.5s backwards;
+  @keyframes whatsapp-peek {
+    /* `scale`, not `transform`: Tailwind already centres the bubble with the `translate` property. */
+    0%, 100% { opacity: 0; scale: 0.9; }
+    10%, 85% { opacity: 1; scale: 1; }
+  }
+
+  --animate-whatsapp-ping: whatsapp-ping 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+  @keyframes whatsapp-ping {
+    0% { transform: scale(1); opacity: 0.55; }
+    75%, 100% { transform: scale(1.7); opacity: 0; }
+  }
+
   --font-script: var(--font-en-script), var(--font-ar-script), cursive;
 
   --shadow-soft: 0 10px 30px -12px rgb(63 23 66 / 0.18);
@@ -217,6 +243,13 @@
   :disabled,
   [data-disabled] {
     cursor: not-allowed;
+  }
+
+  /* Every field that turns invalid (store and dashboard) shakes once; the red border comes from the shadcn primitives. */
+  @media (prefers-reduced-motion: no-preference) {
+    [aria-invalid="true"] {
+      animation: var(--animate-field-shake);
+    }
   }
 }
 

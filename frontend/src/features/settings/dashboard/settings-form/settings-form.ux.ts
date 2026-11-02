@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { settingsInputSchema } from "@nosa/contracts";
+import { focusFirstError } from "@/shared/lib/utils";
 import { useActionFeedback, type FeedbackMessages } from "@/shared/hooks/use-action-feedback";
 import { zodFieldErrors, type ActionState } from "@/shared/lib/action-state";
 import { toSettingsInput, type SettingsDraft } from "../lib/settings-draft";
@@ -42,11 +43,17 @@ export function useSettingsForm({ initial, messages, errorLabels, invalidMessage
     },
     save: () => {
       setSubmitted(true);
-      if (Object.keys(clientErrors).length > 0) return void toast.error(invalidMessage);
+      if (Object.keys(clientErrors).length > 0) {
+        toast.error(invalidMessage);
+        return focusFirstError();
+      }
       startTransition(async () => {
         const outcome = await saveSettings(toSettingsInput(draft));
         setResult(outcome);
-        if (!outcome.ok) setServerErrors(outcome.fieldErrors ?? {});
+        if (!outcome.ok) {
+          setServerErrors(outcome.fieldErrors ?? {});
+          if (outcome.fieldErrors) focusFirstError();
+        }
       });
     },
   };

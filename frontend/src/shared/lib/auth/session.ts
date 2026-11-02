@@ -5,6 +5,7 @@ import { forbidden, redirect } from "next/navigation";
 import type { SessionUser, UserRole } from "@nosa/contracts";
 import { authApi } from "./auth.api";
 import { ACCESS_COOKIE } from "./cookies";
+import { loginPath } from "./login-path";
 
 /**
  * Data Access Layer for the signed-in user. Reads cookies, so call it only inside <Suspense>
@@ -25,7 +26,7 @@ export const getSession = cache(async (): Promise<SessionUser | null> => {
 /** Redirects to the login page (keeping where the visitor was going) when signed out. */
 export async function requireUser(locale: string, next?: string) {
   const user = await getSession();
-  if (!user) redirect(`/${locale}/login${next ? `?next=${encodeURIComponent(next)}` : ""}`);
+  if (!user) redirect(loginPath(locale, next));
   return user;
 }
 

@@ -17,5 +17,13 @@ export async function listCustomers(query: ReturnType<typeof parseCustomersQuery
   if (!token) throw new Error("UNAUTHORIZED");
   const result = await customersDashboardApi.list(token, { ...query, limit: CUSTOMERS_PAGE_SIZE });
   const meta = result.meta ?? { page: 1, limit: CUSTOMERS_PAGE_SIZE, total: result.data.length, pages: 1 };
-  return { items: result.data, meta };
+  // Their order counts in one call for the whole page; the table still renders if it fails.
+  const counts = result.data.length
+    ? await customersDashboardApi.orderCounts(token, result.data.map((customer) => customer.phone)).then(
+        (response) => response.data,
+        () => ({}) as Record<string, never>,
+      )
+    : {};
+  const items = result.data.map((customer) => ({ ...customer, orders: counts[customer.phone] }));
+  return { items, meta };
 }

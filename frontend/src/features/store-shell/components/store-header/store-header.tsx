@@ -60,7 +60,7 @@ export function StoreHeader({ locale, dict, categories, cartSlot }: StoreHeaderP
             </Link>
           </Button>
           <Button asChild variant="ghost" size="icon">
-            <Link href={`/${locale}/login`} aria-label={nav.account}>
+            <Link href={`/${locale}/account/orders`} aria-label={nav.account}>
               <User />
             </Link>
           </Button>

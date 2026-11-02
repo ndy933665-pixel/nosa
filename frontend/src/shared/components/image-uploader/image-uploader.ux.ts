@@ -45,11 +45,18 @@ async function uploadFile(file: File, signature: MediaSignature): Promise<ImageA
 export function useImageUploader({ folder, value, onChange, maxFiles, feedback, messages }: Options) {
   const [uploading, setUploading] = useState(0);
   const [dragging, setDragging] = useState(false);
+  // The last thing that went wrong, shown in red under the box (a toast alone is easy to miss).
+  const [problem, setProblem] = useState<string | null>(null);
+  const fail = (message: string) => {
+    toast.error(message);
+    setProblem(message);
+  };
 
   async function addFiles(files: File[]) {
+    setProblem(null);
     const room = maxFiles - value.length;
     const images = files.filter((file) => file.type.startsWith("image/"));
-    if (images.length < files.length) toast.error(messages.notImage);
+    if (images.length < files.length) fail(messages.notImage);
 
     // Staff limit; the signature carries the exact one, checked again below.
     const accepted = images.slice(0, Math.max(room, 0));
@@ -58,10 +65,10 @@ export function useImageUploader({ folder, value, onChange, maxFiles, feedback, 
     setUploading(accepted.length);
     try {
       const signed = await signImageUpload(folder);
-      if (!signed.ok) return void toast.error(feedback.errors[signed.code]);
+      if (!signed.ok) return void fail(feedback.errors[signed.code]);
 
       const small = accepted.filter((file) => file.size <= signed.data.maxFileSize);
-      if (small.length < accepted.length) toast.error(messages.tooLarge);
+      if (small.length < accepted.length) fail(messages.tooLarge);
 
       const results = await Promise.allSettled(small.map((file) => uploadFile(file, signed.data)));
       const uploaded = results.flatMap((result) => (result.status === "fulfilled" ? [result.value] : []));
@@ -69,10 +76,10 @@ export function useImageUploader({ folder, value, onChange, maxFiles, feedback, 
         onChange([...value, ...uploaded]);
         toast.success(messages.uploaded);
       }
-      if (uploaded.length < small.length) toast.error(messages.uploadFailed);
+      if (uploaded.length < small.length) fail(messages.uploadFailed);
     } catch (error) {
       console.error("Image upload failed", error);
-      toast.error(messages.uploadFailed);
+      fail(messages.uploadFailed);
     } finally {
       setUploading(0);
     }
@@ -81,6 +88,7 @@ export function useImageUploader({ folder, value, onChange, maxFiles, feedback, 
   return {
     uploading,
     dragging,
+    problem,
     canAdd: value.length < maxFiles,
     onPick: (event: ChangeEvent<HTMLInputElement>) => {
       void addFiles([...(event.target.files ?? [])]);

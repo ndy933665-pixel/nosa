@@ -2,18 +2,22 @@ import Link from "next/link";
 import { connection } from "next/server";
 import type { OrderDto } from "@nosa/contracts";
 import { EmptyState } from "@/shared/components/empty-state";
+import { MessageCircle } from "lucide-react";
 import { Illustration } from "@/shared/components/illustration";
 import { getDictionary, getLocale } from "@/shared/i18n/get-dictionary";
+import { getPublicSettings } from "@/shared/lib/settings/get-public-settings";
+import { whatsappLink } from "@/shared/lib/whatsapp";
 import { HttpError } from "@/shared/lib/api/http";
 import { formatPrice } from "@/shared/lib/format";
 import { Button } from "@/shared/ui/button";
 import { checkoutApi } from "../../api/checkout.api";
 import { readLastOrder } from "../../lib/last-order-cookie";
+import { orderWhatsappMessage } from "../../lib/order-whatsapp-message";
 
 /** The thank-you page. A guest sees the order only from the browser that placed it (cookie), never by number alone. */
 export async function OrderConfirmation({ params }: { params: Promise<{ number: string }> }) {
   await connection();
-  const [{ number }, locale, dict, last] = await Promise.all([params, getLocale(), getDictionary(), readLastOrder()]);
+  const [{ number }, locale, dict, last, settings] = await Promise.all([params, getLocale(), getDictionary(), readLastOrder(), getPublicSettings()]);
   const t = dict.store.order;
 
   let order: OrderDto | null = null;
@@ -42,6 +46,14 @@ export async function OrderConfirmation({ params }: { params: Promise<{ number: 
     );
   }
 
+  const whatsappNumber = settings.contact.whatsapp;
+  const whatsappHref = whatsappNumber
+    ? whatsappLink(
+        whatsappNumber,
+        orderWhatsappMessage(order, locale, dict),
+      )
+    : null;
+
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-6 px-4 py-8 text-center sm:px-6">
       <Illustration name="yarn-happy" alt="" className="w-64" priority />
@@ -65,10 +77,8 @@ export async function OrderConfirmation({ params }: { params: Promise<{ number: 
             <dd>{t.cod}</dd>
           </div>
           <div>
-            <dt className="text-muted-foreground">{t.address}</dt>
-            <dd>
-              {order.address.governorateName[locale]}، {order.address.city}، {order.address.street}
-            </dd>
+            <dt className="text-muted-foreground">{t.delivery}</dt>
+            <dd>{t.deliveryText}</dd>
           </div>
         </dl>
 
@@ -88,10 +98,6 @@ export async function OrderConfirmation({ params }: { params: Promise<{ number: 
         </div>
 
         <dl className="flex flex-col gap-1 border-t border-dashed pt-4 text-sm">
-          <div className="flex justify-between">
-            <dt className="text-muted-foreground">{dict.store.cart.shipping}</dt>
-            <dd>{order.shippingFee === 0 ? dict.store.checkout.free : formatPrice(order.shippingFee, locale)}</dd>
-          </div>
           {order.discount > 0 && (
             <div className="flex justify-between text-success">
               <dt>{dict.store.cart.discount}</dt>
@@ -104,6 +110,18 @@ export async function OrderConfirmation({ params }: { params: Promise<{ number: 
           </div>
         </dl>
       </section>
+
+      {whatsappHref && (
+        <div className="flex flex-col items-center gap-2">
+          <Button asChild size="xl">
+            <a href={whatsappHref} target="_blank" rel="noopener noreferrer">
+              <MessageCircle aria-hidden />
+              {t.whatsappCta}
+            </a>
+          </Button>
+          <p className="text-sm text-muted-foreground">{t.whatsappNote}</p>
+        </div>
+      )}
 
       <p className="text-sm text-muted-foreground">{t.keepNumber}</p>
       <Button asChild size="xl" variant="outline">

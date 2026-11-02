@@ -1,13 +1,19 @@
 import { waitUntil } from "@vercel/functions";
-import type { FilterQuery } from "mongoose";
+import { Types, type FilterQuery } from "mongoose";
 import {
   CACHE_TAGS,
   ORDER_TRANSITIONS,
+  STATUSES_BY_GROUP,
+  orderStatusGroup,
   type CheckoutInput,
   type OrderDto,
+  type OrderGroupCounts,
   type OrderStatus,
+  type OrderStatusGroup,
   type PaymentMethod,
+  type orderDeliverySchema,
 } from "@nosa/contracts";
+import type { z } from "zod";
 import { ApiError } from "@/shared/http/api-error";
 import { buildMeta, toSkip } from "@/shared/http/pagination";
 import { nextSequence } from "@/shared/services/counter.service";
@@ -17,8 +23,10 @@ import { attachRedemptionToOrder, evaluateCoupon, redeemCoupon, releaseCoupon } 
 import { getPaymentProvider } from "@/modules/payments/payment-providers";
 import { recordSales, reserveStock, restoreStock } from "@/modules/products/products.pricing";
 import { getSettings } from "@/modules/settings/settings.service";
-import { quoteShipping } from "@/modules/shipping/shipping.service";
+import { getUserPhone } from "@/modules/users/users.service";
 import { OrderModel, type OrderDocument } from "./orders.model";
+
+type OrderDelivery = z.infer<typeof orderDeliverySchema>;
 
 const round = (value: number) => Math.round(value * 100) / 100;
 
@@ -46,7 +54,7 @@ export async function checkout(owner: CartOwner, input: CheckoutInput, idempoten
 
   const settings = await getSettings();
   if (!owner.userId && !settings.checkout.allowGuest) throw ApiError.unauthorized("Please sign in to place an order");
-  const payment = getPaymentProvider(input.paymentMethod, settings.checkout.enabledPaymentMethods);
+  const payment = getPaymentProvider(input.paymentMethod ?? "cod", settings.checkout.enabledPaymentMethods);
 
   const cart = await getCartDocument(owner);
   const lines = cart ? await resolveCartLines(cart) : [];
@@ -63,8 +71,6 @@ export async function checkout(owner: CartOwner, input: CheckoutInput, idempoten
 
   const subtotal = round(lines.reduce((sum, line) => sum + line.lineTotal, 0));
   const coupon = cart.couponCode ? await evaluateCoupon(cart.couponCode, { subtotal, phone: input.contact.phone }) : null;
-  const freeByThreshold = settings.checkout.freeShippingThreshold !== null && subtotal >= settings.checkout.freeShippingThreshold;
-  const shipping = await quoteShipping(input.address.governorate, subtotal, Boolean(coupon?.freeShipping) || freeByThreshold);
   const discount = coupon?.discount ?? 0;
 
   const stock = await reserveStock(lines);
@@ -79,15 +85,16 @@ export async function checkout(owner: CartOwner, input: CheckoutInput, idempoten
       status: "pending",
       statusHistory: [{ status: "pending" }],
       contact: input.contact,
-      address: { ...input.address, governorateName: shipping.governorate.name },
+      address: input.address,
+      source: input.source,
       items: lines.map(({ id: _id, available: _a, maxQuantity: _m, productId, ...line }) => ({ ...line, product: productId })),
       subtotal,
       discount,
-      shippingFee: shipping.fee,
-      total: round(Math.max(subtotal - discount, 0) + shipping.fee),
+      // Delivery and its cost are agreed with the customer on WhatsApp, so nothing is added here.
+      shippingFee: 0,
+      total: round(Math.max(subtotal - discount, 0)),
       couponCode: coupon?.code,
-      paymentMethod: input.paymentMethod,
-      estimatedDays: shipping.estimatedDays,
+      paymentMethod: input.paymentMethod ?? "cod",
       notes: input.notes,
     });
 
@@ -118,13 +125,24 @@ export async function checkout(owner: CartOwner, input: CheckoutInput, idempoten
 
 // ── Customer ───────────────────────────────────────────────────────────────
 
+type CustomerScope = { user?: string; phone?: string };
+
+/** One customer's orders: placed while signed in, or as a guest with the account's phone. */
+async function customerScope({ user, phone }: CustomerScope): Promise<FilterQuery<OrderDocument>> {
+  const accountPhone = user && !phone ? await getUserPhone(user) : null;
+  const phones = [phone, accountPhone].filter((value): value is string => !!value);
+  // ObjectId, not the string: aggregate $match does not cast like find() does.
+  const or = [...(user ? [{ user: new Types.ObjectId(user) }] : []), ...phones.map((value) => ({ "contact.phone": value }))];
+  return or.length ? { $or: or } : {};
+}
+
 export async function listMyOrders(userId: string) {
-  const docs = await OrderModel.find({ user: userId }).sort({ createdAt: -1 }).limit(100);
+  const docs = await OrderModel.find(await customerScope({ user: userId })).sort({ createdAt: -1 }).limit(100);
   return docs.map(toDto);
 }
 
 export async function getMyOrder(userId: string, number: string) {
-  const doc = await OrderModel.findOne({ user: userId, number });
+  const doc = await OrderModel.findOne({ ...(await customerScope({ user: userId })), number });
   if (!doc) throw ApiError.notFound("Order");
   return toDto(doc);
 }
@@ -138,10 +156,11 @@ export async function trackOrder(number: string, phone: string) {
 
 // ── Dashboard ──────────────────────────────────────────────────────────────
 
-type DashboardQuery = {
+type DashboardQuery = CustomerScope & {
   page: number;
   limit: number;
   status?: OrderStatus;
+  group?: OrderStatusGroup;
   paymentMethod?: PaymentMethod;
   governorate?: string;
   q?: string;
@@ -149,21 +168,24 @@ type DashboardQuery = {
   to?: Date;
 };
 
-export async function listOrders({ status, paymentMethod, governorate, q, from, to, ...page }: DashboardQuery) {
+export async function listOrders({ status, group, user, phone, paymentMethod, governorate, q, from, to, ...page }: DashboardQuery) {
   const filter: FilterQuery<OrderDocument> = {
-    ...(status && { status }),
+    ...(await customerScope({ user, phone })),
+    ...(status ? { status } : group && { status: { $in: STATUSES_BY_GROUP[group] } }),
     ...(paymentMethod && { paymentMethod }),
     ...(governorate && { "address.governorate": governorate }),
     ...((from || to) && { createdAt: { ...(from && { $gte: from }), ...(to && { $lte: to }) } }),
   };
   if (q) {
     const term = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    filter.$or = [{ number: new RegExp(term, "i") }, { "contact.phone": new RegExp(term) }, { "contact.name": new RegExp(term, "i") }];
+    const search = [{ number: new RegExp(term, "i") }, { "contact.phone": new RegExp(term) }, { "contact.name": new RegExp(term, "i") }];
+    // The customer scope may already use $or, so the search joins it with $and.
+    filter.$and = [{ $or: search }];
   }
 
   const [docs, total] = await Promise.all([
     OrderModel.find(filter)
-      .select("number status contact address.governorateName total paymentMethod paymentStatus createdAt items.quantity")
+      .select("number status contact source shipment total paymentMethod paymentStatus createdAt items.quantity")
       .sort({ createdAt: -1 })
       .skip(toSkip(page))
       .limit(page.limit),
@@ -175,7 +197,8 @@ export async function listOrders({ status, paymentMethod, governorate, q, from, 
     number: doc.number,
     status: doc.status,
     customer: { name: doc.contact?.name ?? "", phone: doc.contact?.phone ?? "" },
-    governorateName: doc.address?.governorateName,
+    source: doc.source,
+    shipment: doc.shipment?.scope ? doc.toJSON().shipment : undefined,
     itemCount: doc.items.reduce((sum, item) => sum + item.quantity, 0),
     total: doc.total,
     paymentMethod: doc.paymentMethod,
@@ -191,12 +214,61 @@ export async function getOrder(id: string) {
   return { ...toDto(doc), internalNotes: doc.toJSON().internalNotes, allowedNextStatuses: ORDER_TRANSITIONS[doc.status] };
 }
 
-/** Moves an order along the allowed path. Cancelling or returning puts the stock back. */
-export async function updateOrderStatus(id: string, next: OrderStatus, actorId: string, note?: string) {
+/** Counts per group plus money spent on confirmed orders, for the tabs and a customer's page. */
+export async function countOrderGroups(scope: CustomerScope): Promise<OrderGroupCounts> {
+  const rows = await OrderModel.aggregate<{ _id: OrderStatus; count: number; total: number }>([
+    { $match: await customerScope(scope) },
+    { $group: { _id: "$status", count: { $sum: 1 }, total: { $sum: "$total" } } },
+  ]);
+  const counts: OrderGroupCounts = { all: 0, pending: 0, confirmed: 0, cancelled: 0, spent: 0 };
+  for (const row of rows) {
+    const group = orderStatusGroup(row._id);
+    counts[group] += row.count;
+    counts.all += row.count;
+    if (group === "confirmed") counts.spent = round(counts.spent + row.total);
+  }
+  return counts;
+}
+
+/** Orders per group for a page of customers, in one aggregation (keyed by phone). */
+export async function countOrdersByPhones(phones: string[]) {
+  const rows = await OrderModel.aggregate<{ _id: { phone: string; status: OrderStatus }; count: number }>([
+    { $match: { "contact.phone": { $in: phones } } },
+    { $group: { _id: { phone: "$contact.phone", status: "$status" }, count: { $sum: 1 } } },
+  ]);
+  const result: Record<string, Record<OrderStatusGroup, number>> = {};
+  for (const row of rows) {
+    const counts = (result[row._id.phone] ??= { pending: 0, confirmed: 0, cancelled: 0 });
+    counts[orderStatusGroup(row._id.status)] += row.count;
+  }
+  return result;
+}
+
+function applyDelivery(doc: OrderDocument, delivery: OrderDelivery) {
+  const { scope, country, governorate, city, street, carrier, trackingNumber } = delivery;
+  doc.set("address", scope === "domestic" ? { governorate, city, street } : { country, city, street });
+  doc.set("shipment", { scope, carrier: carrier || undefined, trackingNumber: trackingNumber || undefined });
+}
+
+/** Edits where a confirmed order goes and its shipping company / tracking number. */
+export async function updateOrderDelivery(id: string, delivery: OrderDelivery) {
+  const doc = await OrderModel.findById(id);
+  if (!doc) throw ApiError.notFound("Order");
+  applyDelivery(doc, delivery);
+  await doc.save();
+  return getOrder(id);
+}
+
+/** Moves an order along the allowed path. Confirming needs the delivery details; cancelling or returning puts the stock back. */
+export async function updateOrderStatus(id: string, next: OrderStatus, actorId: string, note?: string, delivery?: OrderDelivery) {
   const doc = await OrderModel.findById(id);
   if (!doc) throw ApiError.notFound("Order");
   if (!ORDER_TRANSITIONS[doc.status].includes(next)) {
     throw new ApiError("CONFLICT", `Can't move an order from ${doc.status} to ${next}`, { "body.status": ["INVALID_TRANSITION"] });
+  }
+  if (next === "confirmed") {
+    if (!delivery) throw new ApiError("VALIDATION_ERROR", "Delivery details are required to confirm", { "body.delivery": ["REQUIRED"] });
+    applyDelivery(doc, delivery);
   }
 
   doc.status = next;

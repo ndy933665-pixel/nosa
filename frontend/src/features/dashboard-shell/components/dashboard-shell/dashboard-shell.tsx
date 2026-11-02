@@ -3,7 +3,8 @@ import { DASHBOARD_ROLES } from "@nosa/contracts";
 import { ErrorBoundary } from "@/shared/components/error-boundary";
 import { getDictionary, getLocale } from "@/shared/i18n/get-dictionary";
 import { getFeedbackMessages } from "@/shared/i18n/get-feedback-messages";
-import { requireRole } from "@/shared/lib/auth";
+import { redirect } from "next/navigation";
+import { requireUser } from "@/shared/lib/auth";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/shared/ui/sidebar";
 import { ChangePasswordForm } from "../change-password-form";
 import { DashboardSidebar } from "../dashboard-sidebar";
@@ -15,7 +16,10 @@ import { UserMenu } from "../user-menu";
  */
 export async function DashboardShell({ children }: { children: ReactNode }) {
   const [locale, dict] = await Promise.all([getLocale(), getDictionary()]);
-  const user = await requireRole(locale, DASHBOARD_ROLES, `/${locale}/dashboard`);
+  const next = `/${locale}/dashboard`;
+  const user = await requireUser(locale, next);
+  // Signed in with a customer account: the login page explains it and offers to switch accounts.
+  if (!(DASHBOARD_ROLES as readonly string[]).includes(user.role)) redirect(`/${locale}/nosa?next=${encodeURIComponent(next)}`);
 
   // A temporary password (new staff, or reset by a manager) must be replaced before anything else opens.
   if (user.mustChangePassword) {

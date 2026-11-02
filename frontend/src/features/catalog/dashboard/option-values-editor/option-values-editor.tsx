@@ -2,6 +2,7 @@
 
 import { Plus, X } from "lucide-react";
 import type { Locale } from "@nosa/contracts";
+import { ColorSwatches } from "@/shared/components/color-swatches";
 import { Button } from "@/shared/ui/button";
 import { FieldLabel } from "@/shared/ui/field";
 import { Input } from "@/shared/ui/input";
@@ -14,7 +15,7 @@ type OptionValuesEditorProps = {
   values: OptionValueDraft[];
   onChange: (values: OptionValueDraft[]) => void;
   locale: Locale;
-  labels: { valueAr: string; valueEn: string; add: string; remove: string };
+  labels: { valueAr: string; valueEn: string; add: string; remove: string; pickColors: string; customColor: string };
   example: { ar: string; en: string };
 };
 
@@ -43,6 +44,13 @@ export function OptionValuesEditor({ title, kind, values, onChange, locale, labe
           ))}
         </ul>
       )}
+      {kind === "color" && (
+        <div className="flex flex-col gap-2 rounded-xl border border-dashed p-3">
+          <span className="text-sm text-muted-foreground">{labels.pickColors}</span>
+          <ColorSwatches label={labels.pickColors} locale={locale} selected={values.map((option) => option.value)} onToggle={editor.togglePreset} />
+        </div>
+      )}
+      {kind === "color" && <span className="text-sm text-muted-foreground">{labels.customColor}</span>}
       <div className="flex flex-wrap items-center gap-2">
         <Input className="w-36" lang="ar" dir="rtl" value={editor.ar} onChange={(event) => editor.setAr(event.target.value)} placeholder={`${labels.valueAr}: ${example.ar}`} aria-label={labels.valueAr} />
         <Input className="w-36" lang="en" dir="ltr" value={editor.en} onChange={(event) => editor.setEn(event.target.value)} placeholder={`${labels.valueEn}: ${example.en}`} aria-label={labels.valueEn} />

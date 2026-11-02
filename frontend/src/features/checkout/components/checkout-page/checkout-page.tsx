@@ -8,21 +8,19 @@ import { getSession } from "@/shared/lib/auth";
 import { getCart } from "@/shared/lib/cart/get-cart";
 import { getPublicSettings } from "@/shared/lib/settings/get-public-settings";
 import { Button } from "@/shared/ui/button";
-import { listGovernorates } from "../../api/checkout.queries";
 import { emptyCheckoutDraft } from "../../lib/checkout-draft";
 import { CheckoutForm } from "../checkout-form";
 
 /** Checkout reads the cart and the session (cookies), so the route wraps it in <Suspense>. */
 export async function CheckoutPage() {
   await connection();
-  const [locale, dict, messages, cart, user, settings, governorates] = await Promise.all([
+  const [locale, dict, messages, cart, user, settings] = await Promise.all([
     getLocale(),
     getDictionary(),
     getFeedbackMessages(),
     getCart(),
     getSession(),
     getPublicSettings(),
-    listGovernorates(),
   ]);
   const t = dict.store.checkout;
 
@@ -58,21 +56,15 @@ export async function CheckoutPage() {
     );
   }
 
-  const threshold = settings.checkout.freeShippingThreshold;
-  const freeShipping = Boolean(cart.coupon?.freeShipping) || (threshold !== null && cart.subtotal >= threshold);
-
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6">
       <PageHeader title={t.title} />
       <CheckoutForm
         locale={locale}
         initial={emptyCheckoutDraft({ name: user?.name ?? "", phone: user?.phone ?? "", email: user?.email ?? "" })}
-        governorates={governorates}
         lines={cart.items.map(({ id, name, quantity, lineTotal }) => ({ id, name, quantity, lineTotal }))}
         subtotal={cart.subtotal}
         discount={cart.discount}
-        freeShipping={freeShipping}
-        paymentMethods={settings.checkout.enabledPaymentMethods}
         labels={t}
         cartLabels={dict.store.cart}
         messages={messages}

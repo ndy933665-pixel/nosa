@@ -49,6 +49,28 @@ export const customOrderInputSchema = z.object({
   referenceImages: z.array(imageSchema).max(5).default([]),
 });
 
+export type CustomOrderInput = z.input<typeof customOrderInputSchema>;
+export type CustomOrderType = (typeof CUSTOM_ORDER_TYPES)[number];
+
+export type CustomOrderDto = {
+  id: string;
+  number: string;
+  contact: { name: string; phone: string };
+  type: CustomOrderType;
+  description: string;
+  sizes?: string;
+  colors?: string;
+  budget?: number;
+  neededBy?: string;
+  referenceImages: ImageAsset[];
+  status: CustomOrderStatus;
+  quote?: { price: number; productionDays: number; message?: string; at: string };
+  history: { status: CustomOrderStatus; at: string; note?: string }[];
+  createdAt: string;
+  /** Only on the dashboard detail response. */
+  allowedNextStatuses?: CustomOrderStatus[];
+};
+
 export const customOrderQuoteSchema = z.object({
   price: z.number().positive(),
   productionDays: z.number().int().min(1).max(90),

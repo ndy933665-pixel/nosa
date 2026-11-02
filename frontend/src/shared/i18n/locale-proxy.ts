@@ -7,8 +7,8 @@ function detectLocale(request: NextRequest): Locale {
   const saved = request.cookies.get(LOCALE_COOKIE)?.value;
   if (saved && isLocale(saved)) return saved;
 
-  const preferred = request.headers.get("accept-language")?.split(",")[0]?.slice(0, 2);
-  return preferred && isLocale(preferred) ? preferred : DEFAULT_LOCALE;
+  // The browser language is ignored on purpose: the site opens in Arabic until the visitor picks English.
+  return DEFAULT_LOCALE;
 }
 
 export const pathLocale = (request: NextRequest) => {

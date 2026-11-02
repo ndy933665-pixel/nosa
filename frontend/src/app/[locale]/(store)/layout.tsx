@@ -5,6 +5,7 @@ import { listNavCategories } from "@/features/catalog/api/nav-categories";
 import { AnnouncementBar } from "@/features/store-shell/components/announcement-bar";
 import { StoreFooter } from "@/features/store-shell/components/store-footer";
 import { StoreHeader } from "@/features/store-shell/components/store-header";
+import { WhatsappFloat } from "@/features/store-shell/components/whatsapp-float";
 import { ErrorBoundary } from "@/shared/components/error-boundary";
 import { getDictionary, getLocale } from "@/shared/i18n/get-dictionary";
 import { getPublicSettings } from "@/shared/lib/settings/get-public-settings";
@@ -35,6 +36,7 @@ export default async function StoreLayout({ children }: LayoutProps<"/[locale]">
       <ErrorBoundary labels={errorLabels} compact>
         <StoreFooter locale={locale} dict={dict} settings={settings} categories={categories} pages={pages} />
       </ErrorBoundary>
+      <WhatsappFloat phone={settings.contact.whatsapp} label={dict.common.whatsappChat} message={dict.common.whatsappHello} />
     </>
   );
 }

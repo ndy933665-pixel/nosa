@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition, type FormEvent } from "react";
 import { toast } from "sonner";
 import { createStaffSchema, updateStaffSchema } from "@nosa/contracts";
+import { focusFirstError } from "@/shared/lib/utils";
 import { useActionFeedback, type FeedbackMessages } from "@/shared/hooks/use-action-feedback";
 import { zodFieldErrors, type ActionState } from "@/shared/lib/action-state";
 import { toCreateInput, toUpdateInput, type StaffDraft } from "../../lib/staff-draft";
@@ -45,7 +46,10 @@ export function useStaffDialog({ memberId, initial, messages, errorLabels, inval
     submit: (event: FormEvent) => {
       event.preventDefault();
       setSubmitted(true);
-      if (Object.keys(clientErrors).length > 0) return void toast.error(invalidMessage);
+      if (Object.keys(clientErrors).length > 0) {
+        toast.error(invalidMessage);
+        return focusFirstError();
+      }
 
       startTransition(async () => {
         const outcome = await saveStaff(memberId, memberId ? toUpdateInput(draft) : toCreateInput(draft));

@@ -47,4 +47,6 @@ export type CustomerListItem = {
   providers?: string[];
   lastLoginAt?: string;
   createdAt: string;
+  /** Orders per group, matched by account or phone. */
+  orders?: { pending: number; confirmed: number; cancelled: number };
 };

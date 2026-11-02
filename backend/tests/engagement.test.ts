@@ -33,12 +33,11 @@ async function deliverOrder(token: string) {
     .set(bearer(token))
     .send({
       contact: { name: "Mona", phone: "01012345678" },
-      address: { governorate: "giza", city: "Dokki", street: "5 Tahrir St" },
       paymentMethod: "cod",
     });
   const staff = await createUser("staff");
   for (const status of ["confirmed", "ready", "shipped", "delivered"]) {
-    await api().patch(`/api/v1/dashboard/orders/${order.body.data.id}/status`).set(bearer(staff.token)).send({ status });
+    await api().patch(`/api/v1/dashboard/orders/${order.body.data.id}/status`).set(bearer(staff.token)).send({ status, ...(status === "confirmed" && { delivery: { scope: "domestic", governorate: "القاهرة", city: "مدينة نصر", street: "شارع عباس العقاد ١٢" } }) });
   }
   return order.body.data;
 }
@@ -160,9 +159,9 @@ describe("analytics", () => {
     const res = await api().get("/api/v1/dashboard/analytics/overview?days=7").set(bearer(owner.token));
     expect(res.status).toBe(200);
     expect(res.body.data).toMatchObject({
-      revenue: 1060,
+      revenue: 1000,
       orders: 1,
-      averageOrderValue: 1060,
+      averageOrderValue: 1000,
       ordersByStatus: { delivered: 1 },
       topProducts: [{ slug: "bag", quantity: 2, revenue: 1000 }],
     });

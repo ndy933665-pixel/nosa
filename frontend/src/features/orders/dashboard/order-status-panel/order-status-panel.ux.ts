@@ -13,10 +13,9 @@ export function useOrderStatusPanel(orderId: string, messages: FeedbackMessages)
   const [result, setResult] = useState<ActionState | null>(null);
   useActionFeedback(result, messages);
 
-  const apply = () =>
-    status &&
+  const moveTo = (next: OrderStatus) =>
     startTransition(async () => {
-      const outcome = await changeOrderStatus(orderId, { status, note });
+      const outcome = await changeOrderStatus(orderId, { status: next, note });
       setResult(outcome);
       if (outcome.ok) {
         setStatus("");
@@ -24,5 +23,7 @@ export function useOrderStatusPanel(orderId: string, messages: FeedbackMessages)
       }
     });
 
-  return { status, setStatus, note, setNote, pending, apply };
+  const apply = () => status && moveTo(status);
+
+  return { status, setStatus, note, setNote, pending, apply, moveTo };
 }

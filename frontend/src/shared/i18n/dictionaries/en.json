@@ -12,7 +12,26 @@
     "previous": "Previous",
     "next": "Next",
     "home": "Home",
-    "currency": "EGP"
+    "currency": "EGP",
+    "whatsappChat": "Chat on WhatsApp",
+    "whatsappHello": "Hello Nosa 👋 I have a question",
+    "datePicker": {
+      "placeholder": "Pick a date",
+      "today": "Today",
+      "clear": "Clear"
+    },
+    "delivery": {
+      "scope": "Delivery",
+      "scopes": {
+        "domestic": "Delivery in Egypt",
+        "international": "Shipping abroad"
+      },
+      "address": "Address",
+      "carrier": "Shipping company",
+      "trackingNumber": "Tracking number",
+      "copy": "Copy number",
+      "copied": "Copied ✓"
+    }
   },
   "home": {
     "heroTitle": "Every stitch made with love",
@@ -112,6 +131,11 @@
       "INVALID_PHONE": "That mobile number is not valid",
       "PASSWORD_TOO_SHORT": "Password must be at least 8 characters",
       "REQUIRED": "This field is required"
+    },
+    "switchAccount": {
+      "text": "You're signed in with a customer account ({name}). The dashboard needs a staff account, so sign out first and sign in with it.",
+      "signOut": "Sign out and switch account",
+      "backHome": "Back to home"
     }
   },
   "dashboard": {
@@ -301,7 +325,9 @@
           "ar": "أحمر",
           "en": "Red"
         },
-        "regenerateHint": "Existing variants keep their data."
+        "regenerateHint": "Existing variants keep their data.",
+        "pickColors": "Tap the colours this product comes in",
+        "customColor": "Colour not in the list? Add it yourself:"
       },
       "customization": {
         "title": "Personalisation",
@@ -564,12 +590,13 @@
       "columns": {
         "number": "Order",
         "customer": "Customer",
-        "governorate": "Governorate",
+        "source": "Heard about us from",
         "items": "Items",
         "total": "Total",
         "payment": "Payment",
         "status": "Status",
-        "date": "Date"
+        "date": "Date",
+        "delivery": "Delivery"
       },
       "paymentMethod": {
         "cod": "Cash on delivery",
@@ -613,7 +640,10 @@
           "placeholder": "Choose a status",
           "note": "Note (optional)",
           "apply": "Update status",
-          "final": "This order is finished, there are no further statuses."
+          "final": "This order is finished, there are no further statuses.",
+          "confirmHint": "A new reservation is waiting 👋 Chat with the customer on WhatsApp, agree on the address and payment, then tap “Confirm reservation” and enter the address.",
+          "confirm": "Confirm reservation",
+          "cancel": "Cancel reservation"
         },
         "notes": {
           "title": "Internal notes",
@@ -623,7 +653,107 @@
           "empty": "No notes yet"
         },
         "call": "Call",
-        "whatsapp": "WhatsApp"
+        "whatsapp": "WhatsApp",
+        "source": "Heard about us from",
+        "sendConfirmation": "Send the confirmation on WhatsApp",
+        "confirmationMessage": "Hi {name} 🌸\nYour reservation {number} is confirmed ✓\nTotal: {total}{shipping}\nYou can follow it from “My orders” on the website. Thank you for choosing Nosa 💜"
+      },
+      "delivery": {
+        "title": "Delivery & shipping",
+        "edit": "Edit",
+        "confirmTitle": "Confirm reservation",
+        "editTitle": "Edit delivery details",
+        "description": "Enter the address you agreed on WhatsApp. The shipping company and tracking number are optional; if you add them, the customer sees them in My orders.",
+        "scope": "Where is it going?",
+        "scopes": {
+          "domestic": "Inside Egypt",
+          "international": "Outside Egypt"
+        },
+        "governorate": "Governorate",
+        "governoratePlaceholder": "e.g. Cairo",
+        "country": "Country",
+        "countryPlaceholder": "e.g. Saudi Arabia",
+        "city": "City / area",
+        "street": "Full address",
+        "streetPlaceholder": "Street, building, floor, landmark",
+        "shippingHint": "Optional: once the parcel is with a shipping company, add its name and tracking number.",
+        "carrier": "Shipping company",
+        "carrierPlaceholder": "e.g. Bosta",
+        "trackingNumber": "Tracking number",
+        "note": "Note (optional)",
+        "cancel": "Back",
+        "confirm": "Confirm reservation",
+        "save": "Save",
+        "errors": {
+          "REQUIRED": "This field is required",
+          "TOO_SHORT": "Please add a bit more detail",
+          "TOO_LONG": "This is too long",
+          "INVALID": "Please check this field"
+        }
+      },
+      "groups": {
+        "label": "Filter orders",
+        "all": "All",
+        "pending": "Awaiting confirmation",
+        "confirmed": "Confirmed",
+        "cancelled": "Cancelled"
+      }
+    },
+    "customOrdersScreen": {
+      "title": "Custom orders",
+      "subtitle": "Ideas customers sent. Set a price and time, then follow production",
+      "allStatuses": "All",
+      "empty": "No custom orders yet",
+      "emptyHint": "They will show up here as soon as a customer sends an idea.",
+      "emptyFiltered": "No requests with this status",
+      "columns": {
+        "number": "Request",
+        "customer": "Customer",
+        "type": "Type",
+        "budget": "Budget",
+        "status": "Status",
+        "date": "Date"
+      },
+      "status": {
+        "new": "New",
+        "quoted": "Quote sent",
+        "accepted": "Accepted",
+        "in_production": "In production",
+        "delivered": "Delivered",
+        "rejected": "Rejected",
+        "cancelled": "Cancelled"
+      },
+      "detail": {
+        "back": "Custom orders",
+        "request": "Request",
+        "type": "Type",
+        "sizes": "Size",
+        "colors": "Colours",
+        "budget": "Budget",
+        "neededBy": "Needed before",
+        "references": "Inspiration photos",
+        "noImages": "The customer did not upload photos",
+        "history": "History",
+        "customer": "Customer",
+        "call": "Call",
+        "whatsapp": "WhatsApp",
+        "quote": {
+          "title": "Price and time",
+          "current": "Current quote: {price} · {days} days",
+          "price": "Price (EGP)",
+          "days": "Production time (days)",
+          "message": "Message to the customer (optional)",
+          "send": "Send quote",
+          "revise": "Update quote"
+        },
+        "status": {
+          "title": "Change status",
+          "next": "Next status",
+          "placeholder": "Choose a status",
+          "note": "Note (optional)",
+          "apply": "Confirm",
+          "final": "This request is finished; there are no more statuses."
+        }
       }
     },
     "customers": {
@@ -639,15 +769,28 @@
         "email": "Email",
         "joined": "Joined",
         "lastLogin": "Last sign-in",
-        "status": "Account"
+        "status": "Account",
+        "orders": "Orders"
       },
-      "viewOrders": "See her orders",
+      "viewOrders": "Open the customer page",
       "active": "Active",
       "disabled": "Disabled",
       "pagination": {
         "previous": "Previous",
         "next": "Next",
         "summary": "{from}-{to} of {total}"
+      },
+      "orderGroups": {
+        "pending": "waiting",
+        "confirmed": "confirmed",
+        "cancelled": "cancelled"
+      },
+      "profile": {
+        "back": "All customers",
+        "joined": "Customer since {date}",
+        "whatsapp": "WhatsApp",
+        "spent": "Total spent",
+        "orders": "Their orders"
       }
     },
     "shipping": {
@@ -923,7 +1066,11 @@
       "addFailed": "We could not add it to the cart, please try again",
       "chooseOptions": "Choose a size and a color first",
       "fillFields": "Fill in the required customisation fields",
-      "viewCart": "View cart"
+      "viewCart": "View cart",
+      "pickOption": "Choose a {name} first",
+      "customizeTitle": "Make it yours ✨",
+      "customizeHint": "Whatever you write here is worked onto the piece by hand exactly as you typed it, so check the spelling. If you want to change anything we can agree on it on WhatsApp.",
+      "customizeExtra": "Personalisation adds"
     },
     "shop": {
       "title": "Shop",
@@ -977,7 +1124,7 @@
       "subtotal": "Subtotal",
       "discount": "Discount",
       "shipping": "Shipping",
-      "shippingNote": "Calculated at checkout",
+      "shippingNote": "Agreed on WhatsApp",
       "total": "Total",
       "checkout": "Checkout",
       "fixIssues": "Some pieces need attention before you continue",
@@ -990,33 +1137,97 @@
         "freeShipping": "Free shipping"
       }
     },
+    "customOrder": {
+      "title": "Order a custom piece",
+      "subtitle": "Tell us your idea and we will send you a price and production time before we start.",
+      "contact": "Contact details",
+      "name": "Name",
+      "phone": "Mobile number",
+      "details": "Piece details",
+      "type": "Type of piece",
+      "types": {
+        "dress_set": "Baby dress set",
+        "cardigan": "Cardigan",
+        "bag": "Crochet bag",
+        "embroidery": "Hand embroidery",
+        "accessory": "Accessory",
+        "other": "Something else"
+      },
+      "description": "Describe your idea",
+      "descriptionHint": "Tell us the look, the material and any important details.",
+      "sizes": "Size (optional)",
+      "colors": "Colours (optional)",
+      "budget": "Budget in EGP (optional)",
+      "neededBy": "Needed before (optional)",
+      "images": "Inspiration photos (optional)",
+      "imagesLoginHint": "Sign in to upload photos.",
+      "signIn": "Sign in",
+      "submit": "Send request",
+      "invalid": "Some details need fixing",
+      "successTitle": "We got your request ✓",
+      "successText": "We will review the idea and contact you on your number with a price and production time.",
+      "backToShop": "Keep shopping",
+      "another": "Another request",
+      "errors": {
+        "INVALID_PHONE": "The mobile number is not valid",
+        "INVALID": "This value is not valid",
+        "REQUIRED": "This field is required",
+        "TOO_LONG": "The text is too long",
+        "TOO_SHORT": "Add a few more details so we understand your idea"
+      },
+      "uploader": {
+        "drop": "Drag images here or click to choose",
+        "hint": "PNG or JPG up to 5MB, 5 images at most.",
+        "primary": "Main",
+        "makePrimary": "Make main",
+        "remove": "Remove image",
+        "uploaded": "Images uploaded ✓",
+        "tooLarge": "An image is larger than allowed",
+        "notImage": "That file is not an image",
+        "uploadFailed": "The image did not upload, try again"
+      },
+      "whatsapp": {
+        "intro": "Hello Nosa 👋\nI would like a custom piece, request {number}",
+        "type": "Type: {value}",
+        "description": "Idea: {value}",
+        "sizes": "Size: {value}",
+        "colors": "Colours: {value}",
+        "budget": "Budget: {value}",
+        "neededBy": "Needed before: {value}",
+        "images": "Inspiration photos:",
+        "name": "Name: {value}",
+        "phone": "Mobile: {value}"
+      },
+      "colorsHint": "Pick one or more colours. If yours is not here, mention it in the description."
+    },
     "checkout": {
-      "title": "Checkout",
+      "title": "Reserve your order",
       "contact": "Contact details",
       "name": "Name",
       "phone": "Mobile number",
       "email": "Email (optional)",
-      "address": "Delivery address",
-      "governorate": "Governorate",
-      "chooseGovernorate": "Choose your governorate",
-      "city": "City / area",
-      "street": "Street",
-      "building": "Building / floor / flat",
-      "landmark": "Landmark (optional)",
-      "payment": "Payment method",
-      "cod": "Cash on delivery",
-      "codHint": "You pay the courier in cash when your piece arrives.",
+      "how": "How does it work?",
+      "howText": "There is no online payment. We send your reservation on WhatsApp, and there we agree on payment (on delivery) and on how it is delivered and what it costs.",
+      "source": "Where did you hear about us? (optional)",
+      "sourcePlaceholder": "Choose",
+      "sourceOptions": {
+        "instagram": "Instagram",
+        "facebook": "Facebook",
+        "tiktok": "TikTok",
+        "friend": "A friend or relative",
+        "google": "Google",
+        "other": "Something else"
+      },
       "notes": "Order notes (optional)",
-      "placeOrder": "Place order",
-      "summary": "Order summary",
-      "shipping": "Shipping",
-      "shippingPick": "Choose a governorate to see shipping",
-      "delivery": "Delivery in {min}-{max} business days",
+      "placeOrder": "Reserve now",
+      "summary": "Reservation summary",
+      "shipping": "Delivery",
+      "shippingText": "Agreed on WhatsApp",
       "free": "Free",
-      "signInRequired": "Please sign in to continue your order",
+      "signInRequired": "Please sign in to continue your reservation",
       "signIn": "Sign in",
       "emptyCart": "Your cart is empty, add a piece first",
-      "invalid": "Some details need fixing before you confirm",
+      "invalid": "Some details need fixing before you reserve",
       "errors": {
         "REQUIRED": "This field is required",
         "TOO_SHORT": "This is too short",
@@ -1026,18 +1237,50 @@
       }
     },
     "order": {
-      "thanksTitle": "We got your order 🎉",
-      "thanksText": "We will call you to confirm it. Thank you for choosing something made by hand.",
-      "number": "Order number",
-      "status": "Order status",
+      "thanksTitle": "We got your reservation 🎉",
+      "thanksText": "Last step: send the reservation details on WhatsApp so we can confirm it and agree on payment and delivery.",
+      "whatsappCta": "Send the reservation on WhatsApp",
+      "whatsappNote": "Nothing is paid now. We agree on payment and delivery with you on WhatsApp.",
+      "number": "Reservation number",
+      "status": "Reservation status",
       "items": "Items",
       "total": "Total",
       "payment": "Payment",
-      "cod": "On delivery",
-      "address": "Address",
-      "keepNumber": "Keep your order number in case you want to follow up with us.",
-      "notFound": "We couldn't find this order",
-      "notFoundText": "Your session may have ended. Send us the order number on WhatsApp and we will follow it up."
+      "cod": "Agreed on WhatsApp (on delivery)",
+      "delivery": "Delivery",
+      "deliveryText": "Agreed on WhatsApp",
+      "keepNumber": "Keep your reservation number in case you want to follow up with us.",
+      "notFound": "We couldn't find this reservation",
+      "notFoundText": "Your session may have ended. Send us the reservation number on WhatsApp and we will follow it up.",
+      "whatsapp": {
+        "intro": "Hello Nosa 👋\nI would like to confirm reservation {number}",
+        "items": "Items:",
+        "discount": "Discount: {value}",
+        "total": "Total: {value}",
+        "name": "Name: {value}",
+        "phone": "Mobile: {value}",
+        "notes": "Notes: {value}",
+        "source": "Heard about you from: {value}"
+      }
+    },
+    "myOrders": {
+      "title": "My orders",
+      "hello": "Hi {name} 🌸 Here are all your orders and where each one is.",
+      "logout": "Sign out",
+      "groups": {
+        "label": "Filter orders",
+        "all": "All",
+        "pending": "Awaiting confirmation",
+        "confirmed": "Confirmed",
+        "cancelled": "Cancelled"
+      },
+      "pendingNote": "We got your order and will confirm it with you on WhatsApp.",
+      "whatsapp": "Message us",
+      "whatsappMessage": "Hi Nosa 👋 I'm asking about my order {number}",
+      "total": "Total",
+      "empty": "No orders yet",
+      "emptyHint": "Once you order, you'll find it here and can follow its status.",
+      "emptyGroup": "No orders here"
     }
   }
 }

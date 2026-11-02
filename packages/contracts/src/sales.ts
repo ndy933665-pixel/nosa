@@ -102,24 +102,33 @@ export type CartDto = {
 
 export const IDEMPOTENCY_HEADER = "idempotency-key";
 
+/** "How did you hear about us?" — optional on the checkout form. */
+export const ORDER_SOURCES = ["instagram", "facebook", "tiktok", "friend", "google", "other"] as const;
+export type OrderSource = (typeof ORDER_SOURCES)[number];
+
 export const checkoutSchema = z.object({
   contact: z.object({
     name: z.string().trim().min(2).max(80),
     phone: phoneSchema,
     email: z.email().optional(),
   }),
-  address: z.object({
-    governorate: z.string().trim().min(1),
-    city: z.string().trim().min(2).max(80),
-    street: z.string().trim().min(3).max(200),
-    building: z.string().trim().max(100).optional(),
-    landmark: z.string().trim().max(200).optional(),
-  }),
-  paymentMethod: z.enum(PAYMENT_METHODS),
+  /** Delivery is agreed on WhatsApp, so no address is collected at checkout; old orders may still have one. */
+  address: z
+    .object({
+      governorate: z.string().trim().min(1),
+      city: z.string().trim().min(2).max(80),
+      street: z.string().trim().min(3).max(200),
+      building: z.string().trim().max(100).optional(),
+      landmark: z.string().trim().max(200).optional(),
+    })
+    .optional(),
+  /** Payment is settled when the order is handed over (agreed on WhatsApp), so it is always cash for now. */
+  paymentMethod: z.enum(PAYMENT_METHODS).default("cod"),
+  source: z.enum(ORDER_SOURCES).optional(),
   notes: z.string().trim().max(500).optional(),
 });
 
-export type CheckoutInput = z.infer<typeof checkoutSchema>;
+export type CheckoutInput = z.input<typeof checkoutSchema>;
 
 /** Which status may follow which. Cancelling/returning restores stock. */
 export const ORDER_TRANSITIONS: Record<OrderStatus, readonly OrderStatus[]> = {
@@ -133,10 +142,53 @@ export const ORDER_TRANSITIONS: Record<OrderStatus, readonly OrderStatus[]> = {
   returned: [],
 };
 
-export const updateOrderStatusSchema = z.object({
-  status: z.enum(ORDER_STATUSES),
-  note: z.string().trim().max(500).optional(),
-});
+/** Customers and the dashboard filter orders by these three groups instead of every status. */
+export const ORDER_STATUS_GROUPS = ["pending", "confirmed", "cancelled"] as const;
+export type OrderStatusGroup = (typeof ORDER_STATUS_GROUPS)[number];
+
+export const STATUSES_BY_GROUP: Record<OrderStatusGroup, readonly OrderStatus[]> = {
+  pending: ["pending"],
+  confirmed: ["confirmed", "in_production", "ready", "shipped", "delivered"],
+  cancelled: ["cancelled", "returned"],
+};
+
+export const orderStatusGroup = (status: OrderStatus): OrderStatusGroup =>
+  ORDER_STATUS_GROUPS.find((group) => STATUSES_BY_GROUP[group].includes(status)) ?? "pending";
+
+export const DELIVERY_SCOPES = ["domestic", "international"] as const;
+export type DeliveryScope = (typeof DELIVERY_SCOPES)[number];
+
+const optionalText = (max: number) => z.string().trim().max(max).optional();
+
+/**
+ * Filled in the dashboard when an order is confirmed: where it goes (required) and,
+ * when known, the shipping company and tracking number (optional, shown only if filled).
+ */
+export const orderDeliverySchema = z
+  .object({
+    scope: z.enum(DELIVERY_SCOPES),
+    country: optionalText(60),
+    governorate: optionalText(60),
+    city: z.string().trim().min(2).max(80),
+    street: z.string().trim().min(5).max(300),
+    carrier: optionalText(80),
+    trackingNumber: optionalText(80),
+  })
+  .superRefine((delivery, ctx) => {
+    if (delivery.scope === "domestic" && !delivery.governorate) ctx.addIssue({ code: "custom", path: ["governorate"], message: "REQUIRED" });
+    if (delivery.scope === "international" && !delivery.country) ctx.addIssue({ code: "custom", path: ["country"], message: "REQUIRED" });
+  });
+
+export type OrderDeliveryInput = z.input<typeof orderDeliverySchema>;
+
+/** Confirming an order needs its delivery details; Express enforces the same rule. */
+export const updateOrderStatusSchema = z
+  .object({
+    status: z.enum(ORDER_STATUSES),
+    note: z.string().trim().max(500).optional(),
+    delivery: orderDeliverySchema.optional(),
+  })
+  .refine((body) => body.status !== "confirmed" || body.delivery, { path: ["delivery"], message: "REQUIRED" });
 
 export const orderNoteSchema = z.object({ note: z.string().trim().min(1).max(1000) });
 
@@ -146,6 +198,10 @@ export const orderDashboardQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
   status: z.enum(ORDER_STATUSES).optional(),
+  group: z.enum(ORDER_STATUS_GROUPS).optional(),
+  /** One customer's orders: placed with their account or with their phone as a guest. */
+  user: z.string().regex(/^[a-f\d]{24}$/i).optional(),
+  phone: z.string().trim().max(20).optional(),
   paymentMethod: z.enum(PAYMENT_METHODS).optional(),
   governorate: z.string().optional(),
   q: z.string().trim().max(50).optional(),
@@ -174,7 +230,18 @@ export type OrderDto = {
   status: OrderStatus;
   statusHistory: { status: OrderStatus; at: string; note?: string }[];
   contact: CheckoutInput["contact"];
-  address: CheckoutInput["address"] & { governorateName: LocalizedText };
+  /** Set by the dashboard on confirmation; older orders have the checkout address (governorate code + name). */
+  address?: {
+    country?: string;
+    governorate?: string;
+    governorateName?: LocalizedText;
+    city?: string;
+    street?: string;
+    building?: string;
+    landmark?: string;
+  };
+  shipment?: { scope: DeliveryScope; carrier?: string; trackingNumber?: string };
+  source?: OrderSource;
   items: OrderItemDto[];
   subtotal: number;
   discount: number;
@@ -184,7 +251,7 @@ export type OrderDto = {
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   notes?: string;
-  estimatedDays: { min: number; max: number };
+  estimatedDays?: { min: number; max: number };
   createdAt: string;
 };
 
@@ -193,13 +260,17 @@ export type DashboardOrderListItem = {
   number: string;
   status: OrderStatus;
   customer: { name: string; phone: string };
-  governorateName?: LocalizedText;
+  source?: OrderSource;
+  shipment?: OrderDto["shipment"];
   itemCount: number;
   total: number;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   createdAt: string;
 };
+
+/** Order counts per group (and money spent on confirmed orders), for tabs and customer pages. */
+export type OrderGroupCounts = Record<OrderStatusGroup | "all", number> & { spent: number };
 
 export type DashboardOrderDto = OrderDto & {
   /** `by` is populated with the staff member's name. */

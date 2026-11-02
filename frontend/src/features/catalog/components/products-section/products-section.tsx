@@ -43,7 +43,7 @@ export async function ProductsSection({ title, source, categorySlug, limit, loca
           }
         />
       </Reveal>
-      <ProductGrid products={items} locale={locale} labels={dict.store.product} className="mt-6" />
+      <ProductGrid products={items} locale={locale} labels={dict.store.product} animated className="mt-6" />
     </section>
   );
 }

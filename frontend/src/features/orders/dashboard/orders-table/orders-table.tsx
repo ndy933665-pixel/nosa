@@ -11,21 +11,24 @@ type OrdersTableProps = {
   locale: Locale;
   labels: Dictionary["dashboard"]["orders"];
   orderStatus: Dictionary["orderStatus"];
+  sources: Dictionary["store"]["checkout"]["sourceOptions"];
+  scopes: Dictionary["common"]["delivery"]["scopes"];
 };
 
 /** Newest first. The order number is the link to the detail page. */
-export function OrdersTable({ items, locale, labels, orderStatus }: OrdersTableProps) {
+export function OrdersTable({ items, locale, labels, orderStatus, sources, scopes }: OrdersTableProps) {
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead>{labels.columns.number}</TableHead>
           <TableHead>{labels.columns.customer}</TableHead>
-          <TableHead className="hidden lg:table-cell">{labels.columns.governorate}</TableHead>
+          <TableHead className="hidden lg:table-cell">{labels.columns.source}</TableHead>
           <TableHead className="hidden sm:table-cell">{labels.columns.items}</TableHead>
           <TableHead>{labels.columns.total}</TableHead>
           <TableHead className="hidden md:table-cell">{labels.columns.payment}</TableHead>
           <TableHead>{labels.columns.status}</TableHead>
+          <TableHead className="hidden md:table-cell">{labels.columns.delivery}</TableHead>
           <TableHead className="hidden xl:table-cell">{labels.columns.date}</TableHead>
         </TableRow>
       </TableHeader>
@@ -45,7 +48,7 @@ export function OrdersTable({ items, locale, labels, orderStatus }: OrdersTableP
                 </span>
               </div>
             </TableCell>
-            <TableCell className="hidden lg:table-cell">{order.governorateName?.[locale]}</TableCell>
+            <TableCell className="hidden lg:table-cell">{order.source ? sources[order.source] : "—"}</TableCell>
             <TableCell className="hidden tabular-nums sm:table-cell">{formatNumber(order.itemCount, locale)}</TableCell>
             <TableCell className="font-medium tabular-nums">{formatPrice(order.total, locale)}</TableCell>
             <TableCell className="hidden md:table-cell">
@@ -56,6 +59,20 @@ export function OrdersTable({ items, locale, labels, orderStatus }: OrdersTableP
             </TableCell>
             <TableCell>
               <StatusBadge status={order.status} label={orderStatus[order.status]} />
+            </TableCell>
+            <TableCell className="hidden md:table-cell">
+              {order.shipment ? (
+                <div className="flex flex-col text-sm">
+                  <span>{scopes[order.shipment.scope]}</span>
+                  {order.shipment.trackingNumber && (
+                    <span dir="ltr" className="text-start font-mono text-xs text-muted-foreground">
+                      {order.shipment.trackingNumber}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                "—"
+              )}
             </TableCell>
             <TableCell className="hidden text-sm text-muted-foreground xl:table-cell">{formatDate(order.createdAt, locale)}</TableCell>
           </TableRow>

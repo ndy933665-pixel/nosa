@@ -22,7 +22,7 @@ const everyone = ["staff", "editor", "admin", "owner"] as const;
 export const NAV_ITEMS: readonly NavItem[] = [
   { key: "overview", path: "", icon: "overview", roles: managers, ready: true },
   { key: "orders", path: "/orders", icon: "orders", roles: everyone, ready: true },
-  { key: "customOrders", path: "/custom-orders", icon: "customOrders", roles: everyone, ready: false },
+  { key: "customOrders", path: "/custom-orders", icon: "customOrders", roles: everyone, ready: true },
   { key: "products", path: "/products", icon: "products", roles: editors, ready: true },
   { key: "categories", path: "/categories", icon: "categories", roles: editors, ready: true },
   { key: "customers", path: "/customers", icon: "customers", roles: managers, ready: true },

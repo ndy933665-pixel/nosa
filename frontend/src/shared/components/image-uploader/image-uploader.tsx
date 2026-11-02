@@ -36,6 +36,7 @@ type ImageUploaderProps = {
 /** Pick or drop images, upload them straight to Cloudinary, reorder and remove. The first image is the main one. */
 export function ImageUploader({ folder, value, onChange, maxFiles = 12, labels, feedback, error }: ImageUploaderProps) {
   const uploader = useImageUploader({ folder, value, onChange, maxFiles, feedback, messages: labels });
+  const problem = error ?? uploader.problem;
 
   return (
     <div className="flex flex-col gap-3">
@@ -49,7 +50,7 @@ export function ImageUploader({ folder, value, onChange, maxFiles = 12, labels, 
           "cursor-pointer hover:bg-primary-50 focus-within:ring-3 focus-within:ring-ring/50",
           (!uploader.canAdd || uploader.uploading > 0) && "pointer-events-none opacity-60",
           uploader.dragging && "bg-primary-50",
-          error && "border-destructive",
+          problem && "border-destructive bg-destructive/5",
         )}
       >
         {uploader.uploading > 0 ? <Spinner className="size-6 text-primary" /> : <ImagePlus className="size-6 text-primary" aria-hidden />}
@@ -57,7 +58,11 @@ export function ImageUploader({ folder, value, onChange, maxFiles = 12, labels, 
         <span className="text-xs text-muted-foreground">{labels.hint}</span>
         <input type="file" accept="image/*" multiple className="sr-only" disabled={!uploader.canAdd || uploader.uploading > 0} onChange={uploader.onPick} />
       </label>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {problem && (
+        <p role="alert" className="text-sm text-destructive">
+          {problem}
+        </p>
+      )}
 
       {value.length > 0 && (
         <ul className="grid grid-cols-3 gap-2">

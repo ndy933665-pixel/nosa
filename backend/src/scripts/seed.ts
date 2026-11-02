@@ -7,6 +7,7 @@ import { normalizeEgyptPhone, type ProductInput } from "@nosa/contracts";
 import { connectDatabase, disconnectDatabase } from "@/config/db";
 import { logger } from "@/config/logger";
 import { CategoryModel } from "@/modules/categories/categories.model";
+import { PageModel } from "@/modules/cms/cms.model";
 import { ProductModel } from "@/modules/products/products.model";
 import { getSettings } from "@/modules/settings/settings.service";
 import { seedGovernorates } from "@/modules/shipping/shipping.service";
@@ -175,6 +176,46 @@ const PRODUCTS: DemoProduct[] = [
   },
 ];
 
+/** Starter info pages; the owner rewrites them from the dashboard, so they are only inserted once. */
+const PAGES = [
+  {
+    slug: "about",
+    title: { ar: "قصتنا", en: "Our story" },
+    body: {
+      ar: [
+        "<h2>غرزة غرزة… بحب 💜</h2>",
+        "<p>نوسة براند مصري صغير، اتولد من حب الخيوط والألوان وفرحة إنك تعملي حاجة حلوة بإيدك. بدأنا بقطعة لبيبي في العيلة، والقطعة بقت قطعتين، والحب كبر لحد ما بقت نوسة.</p>",
+        "<h2>إيه اللي بنعمله؟</h2>",
+        "<ul><li>أطقم كروشيه للبيبي والبنات</li><li>جواكت وكارديجان للأطفال</li><li>شنط كروشيه وإكسسوارات</li><li>تطريز يدوي بالأسامي والتواريخ، هدايا للخطوبة والجواز والمواليد</li></ul>",
+        "<h2>ليه نوسة؟</h2>",
+        "<ul><li><strong>شغل إيد ١٠٠٪</strong>: كل قطعة بتتعمل مخصوص ليكي، مش إنتاج مصانع.</li><li><strong>خامات ناعمة وآمنة</strong>: بنختار خيوط قطن مريحة على جلد البيبي.</li><li><strong>تفصيل على مزاجك</strong>: تقدري تختاري اللون والمقاس، أو تبعتيلنا فكرتك ونعملهالك.</li></ul>",
+        "<blockquote>كل قطعة بتاخد وقت وصبر، وده اللي بيخليها مميزة وبتعيش معاكي.</blockquote>",
+        "<h2>نتكلم؟</h2>",
+        "<p>أي سؤال أو فكرة في دماغك، كلمينا على واتساب وهنرد عليكي في أسرع وقت 🌸</p>",
+      ].join(""),
+      en: [
+        "<h2>Stitch by stitch… with love 💜</h2>",
+        "<p>Nosa is a small Egyptian brand born from a love for yarn, colour and the joy of making something beautiful by hand. It started with one piece for a baby in the family, then another, and the love kept growing until it became Nosa.</p>",
+        "<h2>What we make</h2>",
+        "<ul><li>Crochet sets for babies and girls</li><li>Kids cardigans</li><li>Crochet bags and accessories</li><li>Hand embroidery with names and dates — gifts for engagements, weddings and newborns</li></ul>",
+        "<h2>Why Nosa?</h2>",
+        "<ul><li><strong>100% handmade</strong>: every piece is made just for you, not in a factory.</li><li><strong>Soft, safe yarn</strong>: we pick cotton yarns that are gentle on baby skin.</li><li><strong>Made your way</strong>: choose the colour and size, or send us your idea and we'll make it.</li></ul>",
+        "<blockquote>Every piece takes time and patience — that is what makes it special and lasting.</blockquote>",
+        "<h2>Let's talk</h2>",
+        "<p>Any question or idea? Message us on WhatsApp and we'll get back to you soon 🌸</p>",
+      ].join(""),
+    },
+    isPublished: true,
+  },
+];
+
+async function seedPages() {
+  for (const page of PAGES) {
+    await PageModel.updateOne({ slug: page.slug }, { $setOnInsert: page }, { upsert: true });
+  }
+  logger.info(`${PAGES.length} info pages ready`);
+}
+
 async function seedOwner() {
   const phone = normalizeEgyptPhone(process.env.SEED_OWNER_PHONE ?? "");
   const password = process.env.SEED_OWNER_PASSWORD;
@@ -215,6 +256,7 @@ async function main() {
   logger.info("27 governorates ready");
   await seedCategories();
   await seedProducts();
+  await seedPages();
   await disconnectDatabase();
 }
 

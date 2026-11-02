@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { getLocale } from "@/shared/i18n/get-dictionary";
 import { getSession } from "@/shared/lib/auth";
+import { loginPath } from "@/shared/lib/auth/login-path";
 import { homePathFor, navItemsFor } from "../../lib/nav-items";
 
 /**
@@ -10,7 +11,7 @@ import { homePathFor, navItemsFor } from "../../lib/nav-items";
  */
 export async function DashboardHome({ overview }: { overview: ReactNode }) {
   const [locale, user] = await Promise.all([getLocale(), getSession()]);
-  if (!user) redirect(`/${locale}/login?next=${encodeURIComponent(`/${locale}/dashboard`)}`);
+  if (!user) redirect(loginPath(locale, `/${locale}/dashboard`));
 
   const hasOverview = navItemsFor(user.role).some((item) => item.key === "overview");
   if (!hasOverview) redirect(`/${locale}/dashboard${homePathFor(user.role)}`);

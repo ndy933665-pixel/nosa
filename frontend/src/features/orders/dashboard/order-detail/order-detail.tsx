@@ -1,19 +1,22 @@
 import Link from "next/link";
-import { ArrowRight, MessageCircle, Phone } from "lucide-react";
+import { ArrowRight, MessageCircle, Pencil, Phone } from "lucide-react";
 import { connection } from "next/server";
+import { orderStatusGroup } from "@nosa/contracts";
 import { MediaImage } from "@/shared/components/media-image";
 import { PageHeader } from "@/shared/components/page-header";
 import { StatusBadge } from "@/shared/components/status-badge";
 import { getDictionary, getLocale } from "@/shared/i18n/get-dictionary";
 import { getFeedbackMessages } from "@/shared/i18n/get-feedback-messages";
 import { formatDate, formatNumber, formatPrice } from "@/shared/lib/format";
+import { whatsappLink } from "@/shared/lib/whatsapp";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
+import { DeliveryDetails } from "../../components/delivery-details";
+import { deliveryDraftFrom } from "../../lib/delivery-draft";
+import { OrderDeliveryButton } from "../order-delivery-button";
 import { OrderNotes } from "../order-notes";
 import { OrderStatusPanel } from "../order-status-panel";
 import { getDashboardOrder } from "./order-detail.data";
-
-const digits = (phone: string) => phone.replace(/\D/g, "");
 
 const cardClass = "flex flex-col gap-4 rounded-2xl border bg-card p-4 shadow-card sm:p-5";
 
@@ -23,6 +26,19 @@ export async function OrderDetail({ params }: { params: Promise<{ id: string }> 
   const order = await getDashboardOrder(id);
   const t = dict.dashboard.orders;
   const d = t.detail;
+  const dl = t.delivery;
+  const shipment = order.shipment;
+  const shippingLines = [
+    shipment?.carrier && `${dl.carrier}: ${shipment.carrier}`,
+    shipment?.trackingNumber && `${dl.trackingNumber}: ${shipment.trackingNumber}`,
+  ].filter(Boolean);
+  const confirmationMessage = d.confirmationMessage
+    .replace("{name}", order.contact.name)
+    .replace("{number}", order.number)
+    .replace("{total}", formatPrice(order.total, locale))
+    .replace("{shipping}", shippingLines.map((line) => `\n${line}`).join(""));
+  const deliveryForm = { initial: deliveryDraftFrom(order, locale), labels: dl, invalidMessage: dict.dashboard.productForm.invalid, messages };
+  const confirmed = orderStatusGroup(order.status) === "confirmed";
 
   return (
     <div className="flex flex-col gap-5">
@@ -115,8 +131,23 @@ export async function OrderDetail({ params }: { params: Promise<{ id: string }> 
         <div className="flex flex-col gap-5">
           <section className={cardClass}>
             <h2 className="font-display text-xl text-primary-800">{d.status.title}</h2>
-            <OrderStatusPanel orderId={order.id} allowed={order.allowedNextStatuses} labels={d.status} orderStatus={dict.orderStatus} messages={messages} />
+            <OrderStatusPanel orderId={order.id} allowed={order.allowedNextStatuses} labels={d.status} orderStatus={dict.orderStatus} messages={messages} delivery={deliveryForm} />
           </section>
+
+          {(shipment || order.address) && (
+            <section className={cardClass}>
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="font-display text-xl text-primary-800">{dl.title}</h2>
+                {confirmed && (
+                  <OrderDeliveryButton orderId={order.id} mode="edit" variant="outline" size="sm" {...deliveryForm}>
+                    <Pencil />
+                    {dl.edit}
+                  </OrderDeliveryButton>
+                )}
+              </div>
+              <DeliveryDetails address={order.address} shipment={shipment} locale={locale} labels={dict.common.delivery} />
+            </section>
+          )}
 
           <section className={cardClass}>
             <h2 className="font-display text-xl text-primary-800">{d.customer}</h2>
@@ -135,21 +166,32 @@ export async function OrderDetail({ params }: { params: Promise<{ id: string }> 
                 </a>
               </Button>
               <Button asChild variant="outline" size="sm">
-                <a href={`https://wa.me/${digits(order.contact.phone)}`} target="_blank" rel="noopener noreferrer">
+                <a href={whatsappLink(order.contact.phone)} target="_blank" rel="noopener noreferrer">
                   <MessageCircle />
                   {d.whatsapp}
                 </a>
               </Button>
             </div>
+            {order.status === "confirmed" && (
+              <Button asChild className="bg-whatsapp text-white hover:bg-whatsapp-dark">
+                <a href={whatsappLink(order.contact.phone, confirmationMessage)} target="_blank" rel="noopener noreferrer">
+                  <MessageCircle />
+                  {d.sendConfirmation}
+                </a>
+              </Button>
+            )}
             <div className="flex flex-col gap-1 border-t border-dashed pt-4 text-sm">
-              <h3 className="font-medium">{d.address}</h3>
-              <p className="text-muted-foreground">
-                {order.address.governorateName[locale]}، {order.address.city}، {order.address.street}
-              </p>
+              {order.source && (
+                <p className="text-muted-foreground">
+                  {d.source}: {dict.store.checkout.sourceOptions[order.source]}
+                </p>
+              )}
               <p className="text-muted-foreground">
                 {t.paymentMethod[order.paymentMethod]} · {t.paymentStatus[order.paymentStatus]}
               </p>
-              <p className="text-muted-foreground">{d.deliveryEstimate.replace("{min}", formatNumber(order.estimatedDays.min, locale)).replace("{max}", formatNumber(order.estimatedDays.max, locale))}</p>
+              {order.estimatedDays && (
+                <p className="text-muted-foreground">{d.deliveryEstimate.replace("{min}", formatNumber(order.estimatedDays.min, locale)).replace("{max}", formatNumber(order.estimatedDays.max, locale))}</p>
+              )}
               {order.notes && (
                 <p className="mt-2 rounded-lg bg-muted px-3 py-2">
                   <span className="block text-xs font-medium">{d.customerNote}</span>

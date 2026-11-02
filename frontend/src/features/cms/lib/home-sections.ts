@@ -45,7 +45,7 @@ export function defaultHomeSections(dicts: Dictionaries): RenderableSection[] {
           { value: "500+", label: text((d) => d.aboutStats.customers) },
           { value: "4.9", label: text((d) => d.aboutStats.rating) },
         ],
-        cta: { label: text((d) => d.aboutCta), href: "/shop" },
+        cta: { label: text((d) => d.aboutCta), href: "/pages/about" },
       },
     },
     {

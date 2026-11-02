@@ -1,4 +1,4 @@
-import { Heart, Info, Truck } from "lucide-react";
+import { Heart, Info } from "lucide-react";
 import type { Locale, ProductDto } from "@nosa/contracts";
 import type { Dictionary } from "@/shared/i18n/get-dictionary";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/shared/ui/accordion";
@@ -12,13 +12,12 @@ type ProductInfoProps = {
 /** Paragraphs from the plain text the owner typed (a blank line starts a new one). */
 const paragraphs = (text: string | undefined) => (text ?? "").split(/\n{2,}/).map((part) => part.trim()).filter(Boolean);
 
-/** "Details / Care / Shipping" accordion plus the handmade note and the set contents. */
+/** "Details / Care" accordion (delivery is agreed on WhatsApp, so it has no section here) plus the handmade note and the set contents. */
 export function ProductInfo({ product, locale, labels }: ProductInfoProps) {
   const care = paragraphs(product.careInstructions?.[locale]);
   const sections = [
     { value: "details", icon: Info, title: labels.details, body: paragraphs(product.description[locale]) },
     ...(care.length ? [{ value: "care", icon: Heart, title: labels.care, body: care }] : []),
-    { value: "shipping", icon: Truck, title: labels.shipping, body: [labels.shippingText] },
   ];
 
   return (

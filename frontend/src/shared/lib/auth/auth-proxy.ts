@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import type { AuthTokens } from "@nosa/contracts";
 import { authApi } from "./auth.api";
+import { loginPath } from "./login-path";
 import { ACCESS_COOKIE, REFRESH_COOKIE, clearSessionCookies, tokenExpiresWithin, writeSessionCookies } from "./cookies";
 
 /** Refresh a minute before expiry so Server Components always see a valid access token. */
@@ -44,8 +45,5 @@ export function protectedRouteRedirect(request: NextRequest, locale: string) {
   if (!PROTECTED.some((pattern) => pattern.test(pathname))) return null;
   if (request.cookies.get(REFRESH_COOKIE)?.value) return null;
 
-  const url = request.nextUrl.clone();
-  url.pathname = `/${locale}/login`;
-  url.search = `?next=${encodeURIComponent(pathname + search)}`;
-  return NextResponse.redirect(url);
+  return NextResponse.redirect(new URL(loginPath(locale, pathname + search), request.url));
 }

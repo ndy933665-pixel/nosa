@@ -31,6 +31,7 @@ UI primitives come from shadcn/ui (`radix-nova`, RTL enabled) and are branded th
 | `yarn-50…600` | `#FCEDEE` · `#F8D5D8` · `#C32C3C` (500) · `#A62331` |
 | `canvas` · `blush` · `ink` · `ink-muted` · `line` | `#FAF6F1` · `#F6E9EC` · `#141414` · `#5C5560` · `#E9E1D8` |
 | `petal` | `#E7A3C4` (soft pink for line-art flowers) |
+| `whatsapp` · `whatsapp-dark` | `#25D366` · `#1DA851` (floating chat button only) |
 | `success` · `warning` · `info` (+ `-50` tints) | `#2F855A` · `#B7791F` · `#2B6CB0` (order status badges) |
 
 A dark theme is only planned for the dashboard (later). The storefront is light only.

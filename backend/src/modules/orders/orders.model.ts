@@ -1,5 +1,5 @@
 import { Schema, model, Types } from "mongoose";
-import { ORDER_STATUSES, PAYMENT_METHODS, PAYMENT_STATUSES } from "@nosa/contracts";
+import { DELIVERY_SCOPES, ORDER_SOURCES, ORDER_STATUSES, PAYMENT_METHODS, PAYMENT_STATUSES } from "@nosa/contracts";
 import { imageSchema, requiredLocalizedTextSchema } from "@/shared/db/schemas";
 
 /** Items are a snapshot: later product edits never change what the customer bought. */
@@ -44,18 +44,25 @@ const orderSchema = new Schema(
       email: String,
     },
     address: {
-      governorate: { type: String, required: true, index: true },
-      governorateName: { type: requiredLocalizedTextSchema, required: true },
-      city: { type: String, required: true },
-      street: { type: String, required: true },
+      country: String,
+      governorate: String,
+      governorateName: requiredLocalizedTextSchema,
+      city: String,
+      street: String,
       building: String,
       landmark: String,
+    },
+    shipment: {
+      scope: { type: String, enum: DELIVERY_SCOPES },
+      carrier: String,
+      trackingNumber: String,
     },
     items: { type: [orderItemSchema], required: true },
     subtotal: { type: Number, required: true },
     discount: { type: Number, default: 0 },
     shippingFee: { type: Number, required: true },
     total: { type: Number, required: true },
+    source: { type: String, enum: ORDER_SOURCES },
     couponCode: String,
     paymentMethod: { type: String, enum: PAYMENT_METHODS, required: true, index: true },
     paymentStatus: { type: String, enum: PAYMENT_STATUSES, default: "unpaid" },

@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { productInputSchema, type ProductStatus } from "@nosa/contracts";
+import { focusFirstError } from "@/shared/lib/utils";
 import { useActionFeedback, type FeedbackMessages } from "@/shared/hooks/use-action-feedback";
 import { zodFieldErrors, type ActionState } from "@/shared/lib/action-state";
 import { toProductInput, type ProductDraft } from "../lib/product-draft";
@@ -56,7 +57,7 @@ export function useProductForm({ productId, initial, messages, errorLabels, inva
     const parsed = productInputSchema.safeParse(toProductInput(next));
     if (!parsed.success) {
       toast.error(invalidMessage);
-      return;
+      return focusFirstError();
     }
 
     startTransition(async () => {

@@ -1,10 +1,8 @@
 import "server-only";
-import { CART_ID_HEADER, IDEMPOTENCY_HEADER, type CheckoutInput, type GovernorateDto, type OrderDto } from "@nosa/contracts";
+import { CART_ID_HEADER, IDEMPOTENCY_HEADER, type CheckoutInput, type OrderDto } from "@nosa/contracts";
 import { http } from "@/shared/lib/api/http";
 
 export const checkoutApi = {
-  governorates: () => http<GovernorateDto[]>("/shipping/governorates"),
-
   placeOrder: (ctx: { token?: string; cartId?: string | null }, body: CheckoutInput, idempotencyKey: string) =>
     http<OrderDto>("/orders", {
       method: "POST",

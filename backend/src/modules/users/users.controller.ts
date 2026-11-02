@@ -11,6 +11,10 @@ export const listCustomers: RequestHandler = async (_req, res) => {
   sendSuccess(res, items, 200, meta);
 };
 
+export const getCustomer: RequestHandler = async (req, res) => {
+  sendSuccess(res, await usersService.getCustomer(String(req.params.id)));
+};
+
 export const listStaff: RequestHandler = async (_req, res) => {
   sendSuccess(res, await usersService.listStaff());
 };

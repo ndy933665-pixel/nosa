@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { MAX_LINE_QUANTITY, type AddCartItemInput } from "@nosa/contracts";
 import type { ActionState } from "@/shared/lib/action-state";
+import { focusFirstError } from "@/shared/lib/utils";
 import {
   findVariant,
   initialSelection,
@@ -29,6 +30,8 @@ export function useProductPurchase({ product, addToCart, messages, onAdded }: Op
   const [quantity, setQuantity] = useState(1);
   const [custom, setCustom] = useState<Record<string, string>>({});
   const [pending, startTransition] = useTransition();
+  // Set by a rejected add-to-cart, so the missing choices turn red until she picks them.
+  const [attempted, setAttempted] = useState(false);
 
   const variant = useMemo(() => findVariant(product, selection), [product, selection]);
   const complete = isSelectionComplete(product, selection);
@@ -38,12 +41,10 @@ export function useProductPurchase({ product, addToCart, messages, onAdded }: Op
 
   const submit = (): Promise<boolean> =>
     new Promise((resolve) => {
-      if (!complete) {
-        toast.error(messages.chooseOptions);
-        return resolve(false);
-      }
-      if (missingRequired) {
-        toast.error(messages.fillFields);
+      if (!complete || missingRequired) {
+        setAttempted(true);
+        toast.error(complete ? messages.fillFields : messages.chooseOptions);
+        focusFirstError();
         return resolve(false);
       }
 
@@ -78,5 +79,8 @@ export function useProductPurchase({ product, addToCart, messages, onAdded }: Op
     setQuantity: (next: number) => setQuantity(Math.min(Math.max(1, next), max, MAX_LINE_QUANTITY)),
     setCustom: (key: string, value: string) => setCustom((current) => ({ ...current, [key]: value })),
     submit,
+    /** The option still has no value after a rejected add-to-cart. */
+    optionMissing: (key: string) => attempted && !selection[key],
+    fieldMissing: (key: string, required: boolean) => attempted && required && !custom[key]?.trim(),
   };
 }

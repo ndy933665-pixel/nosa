@@ -2,6 +2,7 @@
 
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import type { CouponDto, Locale } from "@nosa/contracts";
+import type { DateFieldLabels } from "@/shared/components/date-field";
 import { EmptyState } from "@/shared/components/empty-state";
 import { PageHeader } from "@/shared/components/page-header";
 import type { FeedbackMessages } from "@/shared/hooks/use-action-feedback";
@@ -28,6 +29,7 @@ import { useCouponsTable } from "./coupons-table.ux";
 type CouponsTableProps = {
   coupons: CouponDto[];
   locale: Locale;
+  dateLabels: DateFieldLabels;
   labels: Dictionary["dashboard"]["coupons"];
   invalidMessage: string;
   messages: FeedbackMessages;
@@ -39,7 +41,7 @@ function describeValue(coupon: CouponDto, locale: Locale, labels: CouponsTablePr
   return formatPrice(coupon.value, locale);
 }
 
-export function CouponsTable({ coupons, locale, labels, invalidMessage, messages }: CouponsTableProps) {
+export function CouponsTable({ coupons, locale, labels, invalidMessage, messages, dateLabels }: CouponsTableProps) {
   const table = useCouponsTable(messages);
 
   const addButton = (
@@ -136,6 +138,8 @@ export function CouponsTable({ coupons, locale, labels, invalidMessage, messages
         onOpenChange={table.setDialogOpen}
         coupon={table.dialog.coupon}
         labels={labels}
+        locale={locale}
+        dateLabels={dateLabels}
         invalidMessage={invalidMessage}
         messages={messages}
       />

@@ -1,6 +1,7 @@
 "use client";
 
-import { COUPON_TYPES, type CouponDto } from "@nosa/contracts";
+import { COUPON_TYPES, type CouponDto, type Locale } from "@nosa/contracts";
+import { DateField, type DateFieldLabels } from "@/shared/components/date-field";
 import { TextField } from "@/shared/components/text-field";
 import type { FeedbackMessages } from "@/shared/hooks/use-action-feedback";
 import type { Dictionary } from "@/shared/i18n/get-dictionary";
@@ -19,12 +20,14 @@ type CouponDialogProps = {
   /** The coupon being edited; null adds a new one. */
   coupon: CouponDto | null;
   labels: Dictionary["dashboard"]["coupons"];
+  locale: Locale;
+  dateLabels: DateFieldLabels;
   invalidMessage: string;
   messages: FeedbackMessages;
 };
 
 /** Mounted fresh for every open (the parent keys it), so the form always starts from the right values. */
-export function CouponDialog({ open, onOpenChange, coupon, labels, invalidMessage, messages }: CouponDialogProps) {
+export function CouponDialog({ open, onOpenChange, coupon, labels, locale, dateLabels, invalidMessage, messages }: CouponDialogProps) {
   const form = useCouponDialog({
     couponId: coupon?.id ?? null,
     initial: coupon ? draftFromCoupon(coupon) : emptyCouponDraft(),
@@ -89,8 +92,8 @@ export function CouponDialog({ open, onOpenChange, coupon, labels, invalidMessag
             <TextField label={f.perUserLimit} type="number" min={1} inputMode="numeric" value={draft.perUserLimit} onValueChange={(perUserLimit) => update({ perUserLimit })} error={error("perUserLimit")} hint={f.unlimitedHint} />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <TextField label={f.startsAt} type="date" dir="ltr" value={draft.startsAt} onValueChange={(startsAt) => update({ startsAt })} error={error("startsAt")} />
-            <TextField label={f.endsAt} type="date" dir="ltr" value={draft.endsAt} onValueChange={(endsAt) => update({ endsAt })} error={error("endsAt")} />
+            <DateField label={f.startsAt} locale={locale} labels={dateLabels} value={draft.startsAt} max={draft.endsAt || undefined} onValueChange={(startsAt) => update({ startsAt })} error={error("startsAt")} />
+            <DateField label={f.endsAt} locale={locale} labels={dateLabels} value={draft.endsAt} min={draft.startsAt || undefined} onValueChange={(endsAt) => update({ endsAt })} error={error("endsAt")} />
           </div>
           <Field orientation="horizontal" className="items-center">
             <Switch id="coupon-active" checked={draft.isActive} onCheckedChange={(isActive) => update({ isActive })} />

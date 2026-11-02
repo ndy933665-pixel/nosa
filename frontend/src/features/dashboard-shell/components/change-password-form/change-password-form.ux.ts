@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition, type FormEvent } from "react";
 import { toast } from "sonner";
 import { changePasswordSchema } from "@nosa/contracts";
+import { focusFirstError } from "@/shared/lib/utils";
 import { useActionFeedback, type FeedbackMessages } from "@/shared/hooks/use-action-feedback";
 import { zodFieldErrors, type ActionState } from "@/shared/lib/action-state";
 import { changeMyPassword } from "./change-password-form.action";
@@ -43,7 +44,10 @@ export function useChangePasswordForm({ messages, errorLabels, invalidMessage }:
     submit: (event: FormEvent) => {
       event.preventDefault();
       setSubmitted(true);
-      if (Object.keys(clientErrors).length > 0) return void toast.error(invalidMessage);
+      if (Object.keys(clientErrors).length > 0) {
+        toast.error(invalidMessage);
+        return focusFirstError();
+      }
 
       startTransition(async () => {
         const outcome = await changeMyPassword({ currentPassword: draft.currentPassword, newPassword: draft.newPassword });

@@ -16,7 +16,7 @@ export async function changeOrderStatus(id: string, input: unknown): Promise<Act
   try {
     const token = await getAccessToken();
     if (!token) return actionFailure("UNAUTHORIZED");
-    await ordersDashboardApi.setStatus(token, id, parsed.data.status, parsed.data.note || undefined);
+    await ordersDashboardApi.setStatus(token, id, { status: parsed.data.status, note: parsed.data.note || undefined });
     refresh();
     return actionSuccess("updated");
   } catch (error) {

@@ -41,6 +41,18 @@ export async function listCustomers({ q, ...page }: CustomersQuery) {
   return { items: items.map((user) => user.toJSON()), meta: buildMeta(page, total) };
 }
 
+/** The phone of any account (active or not), or null; used to find a customer's guest orders. */
+export async function getUserPhone(id: string) {
+  const user = await UserModel.findById(id).select("phone");
+  return user?.phone ?? null;
+}
+
+export async function getCustomer(id: string) {
+  const user = await UserModel.findOne({ _id: id, role: "customer" }).select("name phone email avatar providers isActive lastLoginAt createdAt");
+  if (!user) throw ApiError.notFound("User");
+  return user.toJSON();
+}
+
 export async function listStaff() {
   const staff = await UserModel.find({ role: { $in: DASHBOARD_ROLES } })
     .select("name phone email role isActive mustChangePassword lastLoginAt createdAt")

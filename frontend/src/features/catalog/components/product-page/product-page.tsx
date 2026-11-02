@@ -92,6 +92,7 @@ export async function ProductPage({ params, addToCart }: ProductPageProps) {
             }}
             locale={locale}
             labels={t}
+            dateLabels={dict.common.datePicker}
             messages={{ added: t.added, failed: t.addFailed, chooseOptions: t.chooseOptions, fillFields: t.fillFields }}
             addToCart={addToCart}
             checkoutHref={`/${locale}/checkout`}

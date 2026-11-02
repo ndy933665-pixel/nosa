@@ -12,6 +12,7 @@ export const usersDashboardRoutes = Router();
 const managers = requireRole("admin", "owner");
 
 usersDashboardRoutes.get("/customers", requireRole(...DASHBOARD_ROLES), validate({ query: customersQuerySchema }), controller.listCustomers);
+usersDashboardRoutes.get("/customers/:id", requireRole(...DASHBOARD_ROLES), validate({ params: idParamsSchema }), controller.getCustomer);
 usersDashboardRoutes.get("/staff", managers, controller.listStaff);
 usersDashboardRoutes.post("/staff", managers, validate({ body: createStaffSchema }), controller.createStaff);
 usersDashboardRoutes.patch("/staff/:id", managers, validate({ params: idParamsSchema, body: updateStaffSchema }), controller.updateStaff);

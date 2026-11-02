@@ -12,5 +12,5 @@ export async function CouponsPage() {
   await requireRole(locale, ["admin", "owner"], `/${locale}/dashboard/coupons`);
   const [dict, messages, coupons] = await Promise.all([getDictionary(), getFeedbackMessages(), listCoupons()]);
 
-  return <CouponsTable coupons={coupons} locale={locale} labels={dict.dashboard.coupons} invalidMessage={dict.dashboard.productForm.invalid} messages={messages} />;
+  return <CouponsTable coupons={coupons} locale={locale} labels={dict.dashboard.coupons} invalidMessage={dict.dashboard.productForm.invalid} messages={messages} dateLabels={dict.common.datePicker} />;
 }

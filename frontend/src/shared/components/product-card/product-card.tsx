@@ -22,7 +22,7 @@ export function ProductCard({ product, locale, labels, priority, className }: Pr
   const amount = onSale ? product.salePrice! : product.price;
 
   return (
-    <article className={cn("group relative flex flex-col overflow-hidden rounded-2xl border bg-card shadow-card transition-shadow hover:shadow-soft", className)}>
+    <article className={cn("group relative flex flex-col overflow-hidden rounded-2xl border bg-card shadow-card transition-[transform,box-shadow] duration-300 ease-thread hover:shadow-soft motion-safe:hover:-translate-y-1", className)}>
       <Link href={`/${locale}/product/${product.slug}`} className="flex flex-1 flex-col outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
         <span className="relative block aspect-[4/5] overflow-hidden bg-muted">
           <MediaImage

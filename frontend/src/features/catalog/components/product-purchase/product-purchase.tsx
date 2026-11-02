@@ -1,7 +1,8 @@
 "use client";
 
-import { Minus, Plus, ShoppingBag } from "lucide-react";
+import { Minus, Plus, ShoppingBag, Sparkles } from "lucide-react";
 import type { AddCartItemInput, Locale } from "@nosa/contracts";
+import { DateField, type DateFieldLabels } from "@/shared/components/date-field";
 import { Price } from "@/shared/components/price";
 import type { Dictionary } from "@/shared/i18n/get-dictionary";
 import type { ActionState } from "@/shared/lib/action-state";
@@ -17,6 +18,7 @@ type ProductPurchaseProps = {
   product: PurchaseModel;
   locale: Locale;
   labels: Dictionary["store"]["product"];
+  dateLabels: DateFieldLabels;
   /** Toast texts for the add-to-cart result. */
   messages: { added: string; failed: string; chooseOptions: string; fillFields: string };
   /** Server action owned by the cart feature, passed in by the route. */
@@ -28,7 +30,7 @@ type ProductPurchaseProps = {
 const chip = "rounded-full border px-4 py-1.5 text-sm transition-colors disabled:line-through";
 
 /** Size and color pickers, customisation fields, quantity and the two buttons. */
-export function ProductPurchase({ product, locale, labels, messages, addToCart, checkoutHref }: ProductPurchaseProps) {
+export function ProductPurchase({ product, locale, labels, dateLabels, messages, addToCart, checkoutHref }: ProductPurchaseProps) {
   const purchase = useProductPurchase({ product, addToCart, messages });
   const total = purchase.price + purchase.surcharge;
   // Nothing is sold out until a size/color is chosen; before that the button asks her to choose.
@@ -41,8 +43,12 @@ export function ProductPurchase({ product, locale, labels, messages, addToCart, 
 
       {product.options.map((option) => (
         <fieldset key={option.key} className="flex flex-col gap-2">
-          <legend className="mb-1 text-sm font-medium">{option.name[locale]}</legend>
-          <div className="flex flex-wrap gap-2">
+          <legend className={cn("mb-1 text-sm font-medium transition-colors", purchase.optionMissing(option.key) && "text-destructive")}>{option.name[locale]}</legend>
+          <div
+            tabIndex={purchase.optionMissing(option.key) ? -1 : undefined}
+            aria-invalid={purchase.optionMissing(option.key) || undefined}
+            className={cn("-m-1.5 flex flex-wrap gap-2 rounded-2xl p-1.5 outline-none ring-2 ring-transparent transition-colors", purchase.optionMissing(option.key) && "bg-destructive/5 ring-destructive/40")}
+          >
             {option.values.map((value) => {
               const selected = purchase.selection[option.key] === value.value;
               const available = purchase.isAvailable(option.key, value.value);
@@ -73,29 +79,56 @@ export function ProductPurchase({ product, locale, labels, messages, addToCart, 
               );
             })}
           </div>
+          {purchase.optionMissing(option.key) && <p className="text-sm text-destructive">{labels.pickOption.replace("{name}", option.name[locale])}</p>}
         </fieldset>
       ))}
 
       {product.customization.enabled && product.customization.fields.length > 0 && (
-        <div className="stitch flex flex-col gap-3 rounded-2xl border bg-secondary/60 p-4">
-          {product.customization.fields.map((field) => (
-            <Field key={field.key}>
+        <div className="stitch flex flex-col gap-4 rounded-2xl border bg-secondary/60 p-4">
+          <div className="flex flex-col gap-1">
+            <h3 className="flex items-center gap-2 font-display text-lg font-semibold text-primary-800">
+              <Sparkles className="size-4 text-primary-600" aria-hidden />
+              {labels.customizeTitle}
+            </h3>
+            <p className="text-sm text-muted-foreground">{labels.customizeHint}</p>
+          </div>
+          {product.customization.fields.map((field) =>
+            field.type === "date" ? (
+              <DateField
+                key={field.key}
+                label={field.label[locale]}
+                required={field.required}
+                locale={locale}
+                labels={dateLabels}
+                value={purchase.custom[field.key] ?? ""}
+                onValueChange={(value) => purchase.setCustom(field.key, value)}
+                error={purchase.fieldMissing(field.key, field.required) ? labels.fillFields : undefined}
+              />
+            ) : (
+            <Field key={field.key} data-invalid={purchase.fieldMissing(field.key, field.required) || undefined}>
               <FieldLabel htmlFor={`custom-${field.key}`}>
                 {field.label[locale]}
                 {field.required && <span className="text-destructive"> *</span>}
               </FieldLabel>
               <Input
                 id={`custom-${field.key}`}
-                type={field.type === "date" ? "date" : "text"}
                 maxLength={field.maxLength}
                 value={purchase.custom[field.key] ?? ""}
+                aria-invalid={purchase.fieldMissing(field.key, field.required) || undefined}
                 onChange={(event) => purchase.setCustom(field.key, event.target.value)}
+                className="bg-card"
               />
+              {field.maxLength && (
+                <span className="self-end text-xs tabular-nums text-muted-foreground" aria-live="polite">
+                  {(purchase.custom[field.key] ?? "").length}/{field.maxLength}
+                </span>
+              )}
             </Field>
-          ))}
+            ),
+          )}
           {product.customization.extraPrice > 0 && (
             <p className="text-sm text-muted-foreground">
-              +<Price amount={product.customization.extraPrice} locale={locale} size="sm" />
+              {labels.customizeExtra} <Price amount={product.customization.extraPrice} locale={locale} size="sm" />
             </p>
           )}
         </div>

@@ -4,7 +4,7 @@ import type { Locale, SessionUser } from "@nosa/contracts";
 import { LocaleSwitcher } from "@/shared/components/locale-switcher";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/shared/ui/dropdown-menu";
-import { logout } from "./user-menu.action";
+import { logout } from "@/shared/lib/auth/logout.action";
 
 type UserMenuProps = {
   user: SessionUser;
@@ -46,6 +46,8 @@ export function UserMenu({ user, locale, roleLabel, labels }: UserMenuProps) {
         <DropdownMenuSeparator />
         <form action={logout}>
           <input type="hidden" name="locale" value={locale} />
+          {/* Back to the dashboard's own sign-in page, not the customers' one. */}
+          <input type="hidden" name="next" value={`/${locale}/dashboard`} />
           <DropdownMenuItem asChild variant="destructive">
             <button type="submit" className="w-full">
               <LogOut aria-hidden />

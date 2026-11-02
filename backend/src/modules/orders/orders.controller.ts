@@ -38,11 +38,23 @@ export const detail: RequestHandler = async (req, res) => {
   sendSuccess(res, await service.getOrder(String(req.params.id)));
 };
 
+export const summary: RequestHandler = async (_req, res) => {
+  sendSuccess(res, await service.countOrderGroups(res.locals.query as Parameters<typeof service.countOrderGroups>[0]));
+};
+
+export const customerCounts: RequestHandler = async (_req, res) => {
+  sendSuccess(res, await service.countOrdersByPhones((res.locals.query as { phones: string[] }).phones));
+};
+
 export const updateStatus: RequestHandler = async (req, res) => {
   sendSuccess(
     res,
-    await service.updateOrderStatus(String(req.params.id), req.body.status, currentUser(res.locals).id, req.body.note),
+    await service.updateOrderStatus(String(req.params.id), req.body.status, currentUser(res.locals).id, req.body.note, req.body.delivery),
   );
+};
+
+export const updateDelivery: RequestHandler = async (req, res) => {
+  sendSuccess(res, await service.updateOrderDelivery(String(req.params.id), req.body));
 };
 
 export const addNote: RequestHandler = async (req, res) => {

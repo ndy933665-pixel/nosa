@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { NAMED_COLORS } from "@/shared/lib/colors/named-colors";
 import type { OptionValueDraft } from "../lib/product-draft";
 import { slugify } from "../lib/variants";
 
@@ -31,5 +32,11 @@ export function useOptionValuesEditor(values: OptionValueDraft[], onChange: (val
       setEn("");
     },
     remove: (target: string) => onChange(values.filter((existing) => existing.value !== target)),
+    /** A named color is added with its Arabic/English names and swatch in one tap, or removed if it is already there. */
+    togglePreset: (key: string) => {
+      if (values.some((existing) => existing.value === key)) return onChange(values.filter((existing) => existing.value !== key));
+      const color = NAMED_COLORS.find((item) => item.key === key);
+      if (color) onChange([...values, { value: color.key, label: { ...color.name }, hex: color.hex }]);
+    },
   };
 }
