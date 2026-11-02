@@ -8,5 +8,6 @@ export default defineConfig({
   clean: true,
   sourcemap: true,
   // Contracts ship as TypeScript source, so they are bundled into the build.
-  noExternal: ["@nosa/contracts"],
+  // sanitize-html is CommonJS but requires htmlparser2 (ESM only), which Vercel's Node can't require().
+  noExternal: ["@nosa/contracts", "sanitize-html"],
 });
